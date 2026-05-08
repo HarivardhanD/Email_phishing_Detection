@@ -1,16 +1,19 @@
 {
   "manifest_version": 3,
+
   "name": "Phishing Email Detector",
+
   "version": "1.0",
-  "description": "Detect phishing emails using Flask backend",
 
   "permissions": [
     "activeTab",
-    "scripting"
+    "scripting",
+    "tabs"
   ],
 
   "host_permissions": [
-    "http://127.0.0.1:5000/*"
+    "http://127.0.0.1:5000/*",
+    "https://mail.google.com/*"
   ],
 
   "content_scripts": [

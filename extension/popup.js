@@ -1,6 +1,7 @@
-let latestReport = "";
+let latestData = null;
 
-document.getElementById("analyzeBtn").addEventListener("click", async () => {
+document.getElementById("analyzeBtn")
+.addEventListener("click", async () => {
 
     const [tab] = await chrome.tabs.query({
         active: true,
@@ -8,7 +9,9 @@ document.getElementById("analyzeBtn").addEventListener("click", async () => {
     });
 
     chrome.tabs.sendMessage(
+
         tab.id,
+
         { action: "getEmail" },
 
         async (response) => {
@@ -21,94 +24,140 @@ document.getElementById("analyzeBtn").addEventListener("click", async () => {
                 return;
             }
 
-            const apiResponse = await fetch("http://127.0.0.1:5000/analyze", {
+            const apiResponse = await fetch(
 
-                method: "POST",
+                "http://127.0.0.1:5000/analyze",
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                {
 
-                body: JSON.stringify({
-                    email: response.email
-                })
-            });
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        email: response.email
+                    })
+                }
+            );
 
             const data = await apiResponse.json();
 
-            const resultDiv = document.getElementById("result");
+            const resultDiv =
+                document.getElementById("result");
 
-resultDiv.innerHTML =
-    `Verdict: ${data.verdict}<br>Risk Score: ${data.score}`;
+            resultDiv.innerHTML =
+                `Verdict: ${data.verdict}<br>
+                 Risk Score: ${data.score}`;
 
-if (data.verdict.includes("High")) {
-    resultDiv.style.borderLeft = "6px solid red";
-}
-else if (data.verdict.includes("Medium")) {
-    resultDiv.style.borderLeft = "6px solid orange";
-}
-else {
-    resultDiv.style.borderLeft = "6px solid green";
-}
 
-            const reasonsList = document.getElementById("reasons");
+            // RISK COLORS
+
+            if (data.verdict.includes("High")) {
+
+                resultDiv.style.borderLeft =
+                    "8px solid red";
+
+                resultDiv.style.background =
+                    "#ffe5e5";
+            }
+
+            else if (data.verdict.includes("Medium")) {
+
+                resultDiv.style.borderLeft =
+                    "8px solid orange";
+
+                resultDiv.style.background =
+                    "#fff3e0";
+            }
+
+            else {
+
+                resultDiv.style.borderLeft =
+                    "8px solid green";
+
+                resultDiv.style.background =
+                    "#e8f5e9";
+            }
+
+
+            // REASONS LIST
+
+            const reasonsList =
+                document.getElementById("reasons");
 
             reasonsList.innerHTML = "";
 
             data.reasons.forEach(reason => {
 
-                const li = document.createElement("li");
+                const li =
+                    document.createElement("li");
 
                 li.textContent = reason;
 
                 reasonsList.appendChild(li);
             });
 
-            latestReport = `
-PHISHING EMAIL ANALYSIS REPORT
-================================
 
-Subject:
-${response.subject}
+            // STORE REPORT DATA
 
-Sender:
-${response.sender}
+            latestData = {
 
-Verdict:
-${data.verdict}
+    sender: response.sender,
 
-Risk Score:
-${data.score}
+    subject: response.subject,
 
-Reasons:
-${data.reasons.join("\n")}
+    verdict: data.verdict,
 
-Recommended Actions:
-- Do not click suspicious links
-- Verify sender identity
-- Avoid sharing credentials
-- Report suspicious email
-`;
+    score: data.score,
+
+    reasons: data.reasons
+};
         }
     );
 });
 
 
-document.getElementById("downloadBtn").addEventListener("click", () => {
+// PDF DOWNLOAD
 
-    const blob = new Blob([latestReport], {
-        type: "text/plain"
-    });
+document.getElementById("downloadBtn")
+.addEventListener("click", async () => {
 
-    const url = URL.createObjectURL(blob);
+    if (!latestData) {
 
-    const a = document.createElement("a");
+        alert("Analyze an email first.");
+
+        return;
+    }
+
+    const response = await fetch(
+
+        "http://127.0.0.1:5000/generate_report",
+
+        {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify(latestData)
+        }
+    );
+
+    const blob = await response.blob();
+
+    const url =
+        window.URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
 
     a.href = url;
 
-    a.download = "phishing_report.txt";
+    a.download = "phishing_report.pdf";
 
     a.click();
-
-    URL.revokeObjectURL(url);
 });
