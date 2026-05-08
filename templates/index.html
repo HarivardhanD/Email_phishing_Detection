@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phishing Detector</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<h2>Phishing Email Detector</h2>
+
+<form method="post">
+    <textarea name="email" placeholder="Paste email here..."></textarea><br>
+    <button type="submit">Analyze</button>
+</form>
+
+{% if result %}
+    <h3>Verdict: {{ result[1] }} (Score: {{ result[0] }})</h3>
+    <ul>
+        {% for r in result[2] %}
+            <li>{{ r }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+</body>
+</html>
